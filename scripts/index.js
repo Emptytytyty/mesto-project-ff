@@ -6,9 +6,12 @@ const cardTemplate = document.querySelector('#card-template').content;
 // @todo: Функция создания карточки
 function createCard(cardName, cardImageLink, deleteCallback) {
   const newCard = cardTemplate.querySelector('.card').cloneNode(true);
+  const cardImage =  newCard.querySelector('.card__image');
+  const cardTitle =  newCard.querySelector('.card__title');
 
-  newCard.querySelector('.card__title').textContent = cardName;
-  newCard.querySelector('.card__image').src = cardImageLink;
+  cardTitle.textContent = cardName;
+  cardImage.src = cardImageLink;
+  cardImage.alt = cardName;
 
   const cardDeleteButton = newCard.querySelector('.card__delete-button');
   cardDeleteButton.addEventListener('click', deleteCallback);
