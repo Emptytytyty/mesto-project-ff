@@ -20,7 +20,6 @@ function addCardOnSubmit(evt) {
   evt.preventDefault();
   const name = cardNameInput.value;
   const imageLink = cardImageInput.value;
-  console.log(name, imageLink)
   const cardToAdd = createCard({name, imageLink, deleteCallback: deleteCard, likeCallback: likeCard, imageCallback: openImageModal});
 
   cardList.prepend(cardToAdd);
