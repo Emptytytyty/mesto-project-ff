@@ -6,6 +6,7 @@ import { openModal, closeModal, closeModalOnOverlay} from './components/modal';
 function openImageModal(cardName, cardImageLink) {
   popupCaption.textContent = cardName;
   popupImage.src = cardImageLink;
+  popupImage.alt = cardName;
   openModal(imageModal);
 }
 

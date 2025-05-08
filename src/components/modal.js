@@ -16,10 +16,7 @@ function closeModalOnEsc(evt) {
 }
 
 function closeModalOnOverlay(evt) {
-  const openedPopup = document.querySelector('.popup_is-opened');
-  if (evt.target === openedPopup) {
-    closeModal(openedPopup);
-  }
+  if (evt.target === evt.currentTarget) closeModal(evt.currentTarget);
 }
 
 module.exports = {openModal, closeModal, closeModalOnEsc, closeModalOnOverlay}
