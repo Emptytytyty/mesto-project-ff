@@ -1,0 +1,11 @@
+.popup__field {
+  display: block;
+  position: relative;
+  background-color: transparent;
+  margin-bottom: 30px;
+  overflow: visible;
+}
+
+.popup__field:last-of-type {
+  margin-bottom: 0;
+}
