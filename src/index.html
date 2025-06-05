@@ -73,6 +73,19 @@
       <p class="popup__caption"></p>
     </div>
   </div>
+  <div class="popup popup_type_edit-image">
+    <div class="popup__content">
+      <button type="button" class="popup__close"></button>
+      <h3 class="popup__title">Обновить аватар</h3>
+      <form class="popup__form" name="edit-profile-image" novalidate>
+        <div class="popup__field">
+          <input type="url" name="link" class="popup__input popup__input_type_image" placeholder="Ссылка на картинку" required data-error-element="edit-image-url">
+          <div class="popup__error popup__error_type_edit-image-url"></div>
+        </div>
+        <button type="submit" class="button popup__button">Сохранить</button>
+      </form>
+    </div>
+  </div>
 </div>
 
 <template id="card-template">
@@ -83,6 +96,7 @@
       <h2 class="card__title">
       </h2>
       <button type="button" class="card__like-button"></button>
+      <span class="card__likes-counter">0</span>
     </div>
   </li>
 </template>
