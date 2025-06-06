@@ -1,12 +1,10 @@
 const cardTemplate = document.querySelector('#card-template').content;
 
-function createCard( { name, imageLink, deleteCallback, likeCallback, imageCallback, likes, cardId}) {
+const createCard = ( { name, imageLink, deleteCallback, likeCallback, imageCallback, likes, cardId}) => {
   const newCard = cardTemplate.querySelector('.card').cloneNode(true);
   const cardImage =  newCard.querySelector('.card__image');
   const cardTitle =  newCard.querySelector('.card__title');
   const likesCounter = newCard.querySelector('.card__likes-counter');
-
-  newCard.dataset.cardId = cardId;
 
   if (likes) {
     likesCounter.textContent = likes.length;
@@ -20,25 +18,25 @@ function createCard( { name, imageLink, deleteCallback, likeCallback, imageCallb
   if (!deleteCallback) {
     cardDeleteButton.style.display = 'none';
   } else {
-    cardDeleteButton.addEventListener('click', () => deleteCallback(newCard));
+    cardDeleteButton.addEventListener('click', () => deleteCallback(newCard, cardId));
   }
 
   const cardLikeButton = newCard.querySelector('.card__like-button');
-  cardLikeButton.addEventListener('click', () => likeCallback(cardLikeButton));
+  cardLikeButton.addEventListener('click', () => likeCallback(cardLikeButton, cardId));
 
   cardImage.addEventListener('click', () => imageCallback(name, imageLink));
 
   return newCard;
 };
 
-function deleteCard (card) {
+const deleteCard = (card) => {
   card.remove();
   if (card.onDelete) { // Обработка колбека (если такой есть) после удаления карточки
     card.onDelete()
   }
 }
 
-function likeCard (likeButton) {
+const likeCard = (likeButton) => {
   likeButton.classList.toggle('card__like-button_is-active');
 }
 

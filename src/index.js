@@ -2,20 +2,28 @@ require('./pages/index.css');
 import { createCard, deleteCard, likeCard } from './components/card';
 import { openModal, closeModal, closeModalOnOverlay} from './components/modal';
 import {enableValidation, clearValidation} from './validation';
-import { getProfile, getInitialCards, patchProfile, postCard, deleteCardFetch, likeCardFetch, unlikeCardFetch, patchProfileImage } from './api';
+import { getProfile, getInitialCards, patchProfile, postCard, deleteCardFetch, likeCardFetch, unlikeCardFetch, patchProfileImage, errorHandler } from './api';
 
-function openImageModal(cardName, cardImageLink) {
+const openImageModal = (cardName, cardImageLink) => {
   popupCaption.textContent = cardName;
   popupImage.src = cardImageLink;
   popupImage.alt = cardName;
   openModal(imageModal);
 }
 
-function changeProfileOnsubmit(evt) {
+const toggleButtonState = (submitButton, loadText, readyText) => {
+  if (submitButton.textContent === readyText) {
+    submitButton.textContent = loadText;
+  } else {
+    submitButton.textContent = readyText;
+  }
+}
+
+const changeProfileOnsubmit = (evt) => {
   evt.preventDefault();
   const name = profileNameInput.value;
   const descriprtion = profileJobInput.value;
-  profileSubmitButton.textContent = 'Сохранение...';
+  toggleButtonState(profileSubmitButton, 'Сохранение...', 'Сохранить');
   
   patchProfile(name, descriprtion)
   .then(data => {
@@ -23,93 +31,81 @@ function changeProfileOnsubmit(evt) {
       profileDescription.textContent = data.about;
       closeModal(editModal);
   })
-  .finally(() => {
-    profileSubmitButton.textContent = 'Сохранить';
-  })
+  .catch(err => errorHandler(err))
+  .finally(() => toggleButtonState(profileSubmitButton, 'Сохранение...', 'Сохранить'))
 }
 
-function changeProfileImageOnSubmit(evt) {
+const changeProfileImageOnSubmit = (evt) => {
   evt.preventDefault();
-  editImageSubmitButton.textContent = 'Сохранение...';
-
+  toggleButtonState(editImageSubmitButton, 'Сохранение...', 'Сохранить');
+  
   const avatar = profileImageInput.value;
   patchProfileImage(avatar)
-  .then(() => getProfile())
+  .then(() => {
+    return getProfile()
+  })
   .then(data => {
     profileImage.style['background-image'] = `url(${data.avatar})`;
     closeModal(editImageModal);
+    formElementEditImage.reset();
   })
-  .finally(() => {
-    editImageSubmitButton.textContent = 'Сохранить';
-  })
+  .catch(err => errorHandler(err))
+  .finally(() => toggleButtonState(editImageSubmitButton, 'Сохранение...', 'Сохранить'))
 }
 
-function addCardOnSubmit(evt) {
+const addCardOnSubmit = (evt) => {
   evt.preventDefault();
   const name = cardNameInput.value;
   const imageLink = cardImageInput.value;
-  cardSubmitButton.textContent = 'Сохранение...';
+  toggleButtonState(cardSubmitButton, 'Сохранение...', 'Сохранить');
   
-  postCard(name, imageLink).then(data => {
+  postCard(name, imageLink)
+  .then(data => {
     if (data) {
       const cardToAdd = createCard({name: data.name, imageLink: data.link, deleteCallback: deleteCardCallback, likeCallback: toggleLikeCallback, imageCallback: openImageModal, likes: data.likes, cardId: data['_id']});
       cardList.prepend(cardToAdd);
       evt.target.reset();
-      clearValidation(evt.target, validationConfig);
       closeModal(cardModal);
     }
   })
-  .finally(() => {
-    cardSubmitButton.textContent = 'Сохранить';
-  })
+  .catch(err => errorHandler(err))
+  .finally(() => toggleButtonState(cardSubmitButton, 'Сохранение...', 'Сохранить'))
 }
 
-function deleteCardCallback(card) {
-  deleteCardFetch(card)
+const deleteCardCallback = (card, cardId) => {
+  deleteCardFetch(cardId)
   .then(deleteCard(card))
+  .catch(err => errorHandler(err))
 }
 
-function toggleLikeCallback(cardLikeButton) {
+const toggleLikeCallback = (cardLikeButton, cardId) => {
   if (cardLikeButton.classList.contains('card__like-button_is-active')) {
-    unlikeCardCallback(cardLikeButton);
+    unlikeCardCallback(cardLikeButton, cardId);
   } else {
-    likeCardCallback(cardLikeButton);
+    likeCardCallback(cardLikeButton, cardId);
   }
-
-  likeCard(cardLikeButton);
 }
 
-function likeCardCallback(cardLikeButton) {
+const likeCardCallback = (cardLikeButton, cardId) => {
   const card = cardLikeButton.closest('.card');
-  const cardId = card.dataset.cardId;
-
   likeCardFetch(cardId)
-  .then(res => {
-    if (res.ok) {
-      return res.json();
-    }
-  })
   .then(data => {
     const likesCounter = card.querySelector('.card__likes-counter');
-
+    likeCard(cardLikeButton)
     likesCounter.textContent = data.likes.length;
   })
+  .catch(err => errorHandler(err))
 }
 
-function unlikeCardCallback(cardLikeButton) {
+const unlikeCardCallback = (cardLikeButton, cardId) => {
   const card = cardLikeButton.closest('.card');
-  const cardId = card.dataset.cardId;
   unlikeCardFetch(cardId)
-  .then(res => {
-    if (res.ok) {
-      return res.json();
-    }
-  })
   .then(data => {
     const likesCounter = card.querySelector('.card__likes-counter');
-
+    likeCard(cardLikeButton)
     likesCounter.textContent = data.likes.length;
   })
+  .catch(err => errorHandler(err))
 }
 
 const validationConfig = {
@@ -129,28 +125,12 @@ const formElementEditImage = document.querySelector('.popup_type_edit-image .pop
 const cardList = document.querySelector('.places__list');
 let myId = null;
 const profile = getProfile();
+const initialCards = getInitialCards();
+
 profile.then(data => {
   myId = data['_id'];
 })
-
-Promise.all([profile]).then(() => getInitialCards())
-  .then(cards => {
-  cards.forEach(item => {
-    const name = item.name;
-    const imageLink = item.link;
-    const ownerId = item.owner['_id'];
-    const cardToAdd = createCard({name, imageLink, deleteCallback: ownerId === myId ? deleteCardCallback : false, likeCallback: toggleLikeCallback, imageCallback: openImageModal, likes: item.likes, cardId: item['_id']});
-    
-    if (item.likes.some(like => {                          //Проверяем лайкали мы эту карточку ранее, если да перекрашиваем кнопку лайка
-      return like['_id'] === myId;
-    })) {
-      const cardLikeButton = cardToAdd.querySelector('.card__like-button');
-      likeCard(cardLikeButton);
-    }
-
-  cardList.append(cardToAdd);
-  })
-})
+.catch(err => errorHandler(err))
 
 const cardNameInput = document.querySelector('.popup__input_type_card-name'); 
 const cardImageInput = document.querySelector('.popup__input_type_url');
@@ -167,11 +147,29 @@ const profileName = document.querySelector('.profile__title');
 const profileDescription = document.querySelector('.profile__description');
 const profileImage = document.querySelector('.profile__image');
 
-profile.then(data => {
-    profileName.textContent = data.name;
-    profileDescription.textContent = data.about;
-    profileImage.style['background-image'] = `url(${data.avatar})`;
+Promise.all([profile, initialCards])
+  .then(([userData, cards]) => {
+    profileName.textContent = userData.name;
+    profileDescription.textContent = userData.about;
+    profileImage.style['background-image'] = `url(${userData.avatar})`;
+
+  cards.forEach(item => {
+    const name = item.name;
+    const imageLink = item.link;
+    const ownerId = item.owner['_id'];
+    const cardToAdd = createCard({name, imageLink, deleteCallback: ownerId === myId ? deleteCardCallback : false, likeCallback: toggleLikeCallback, imageCallback: openImageModal, likes: item.likes, cardId: item['_id']});
+    
+    if (item.likes.some(like => {                          //Проверяем лайкали мы эту карточку ранее, если да перекрашиваем кнопку лайка
+      return like['_id'] === myId;
+    })) {
+      const cardLikeButton = cardToAdd.querySelector('.card__like-button');
+      likeCard(cardLikeButton);
+    }
+
+  cardList.append(cardToAdd);
+  })
 })
+.catch(err => errorHandler(err))
 
 editButton.addEventListener('click', () => {
   profileNameInput.value = profileName.textContent;
@@ -185,6 +183,8 @@ const addButton = document.querySelector('.profile__add-button');
 const cardSubmitButton = cardModal.querySelector('.popup__button');
 
 addButton.addEventListener('click', () => {
+  formElementNewCard.reset();
+  clearValidation(formElementNewCard, validationConfig);
   openModal(cardModal);
 });
 
@@ -197,6 +197,7 @@ const editImageModal = document.querySelector('.popup_type_edit-image');
 const profileImageInput = editImageModal.querySelector('.popup__input_type_image');
 const editImageSubmitButton = editImageModal.querySelector('.popup__button');
 profileImage.addEventListener('click', () => {
+  formElementEditImage.reset();
   clearValidation(formElementEditImage, validationConfig);
   openModal(editImageModal);
 });

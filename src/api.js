@@ -7,36 +7,31 @@ const config = {
     'Content-Type': 'application/json'
   }
 }
+
+const getResponseData = (res) => {
+  if (res.ok) {
+    return res.json()
+  }
+
+  return Promise.reject(`ERROR: ${res.status}`)
+}
+
+const errorHandler = (err) => {
+  console.log(`Error: ${err}`)
+}
+
 const getProfile = () => {
   return  fetch(`${config.baseUrl}/users/me`, {
     headers: config.headers
   })
-  .then(res => {
-    if (res.ok) {
-      return res.json()
-    }
-
-    return Promise.reject(`ERROR: ${res.status}`)
-  })
-  .catch(err => {
-    console.log(err)
-  })
+  .then(res => getResponseData(res))
 }
 
 const getInitialCards = () => {
   return fetch(`${config.baseUrl}/cards`, {
     headers: config.headers
   })
-  .then(res => {
-    if (res.ok) {
-      return res.json();
-    }
-
-    return Promise.reject(`ERROR: ${res.status}`)
-  })
-  .catch(err => {
-    console.log(err);
-  })
+  .then(res => getResponseData(res))
 }
 
 const patchProfile = (name, about) => {
@@ -47,16 +42,8 @@ const patchProfile = (name, about) => {
       name: name,
       about: about
     })
-  }).then(res => {
-    if (res.ok) {
-      return res.json()
-    }
-
-    return Promise.reject(`ERROR: ${res.status}`)
   })
-  .catch(err => {
-    console.log(err);
-  })
+  .then(res => getResponseData(res))
 }
 
 const postCard = (name, link) => {
@@ -67,25 +54,14 @@ const postCard = (name, link) => {
       name: name,
       link: link
     })
-  }).then(res => {
-    if (res.ok) {
-      return res.json()
-    }
-
-    return Promise.reject(`post card error: ${res.status}`)
-  }).catch(err => {
-    console.log(err)
   })
+  .then(res => getResponseData(res))
 }
 
-const deleteCardFetch = (card) => {
-  const cardId = card.dataset.cardId;
+const deleteCardFetch = (cardId) => {
   return fetch(`${config.baseUrl}/cards/${cardId}`, {
     method: 'DELETE',
     headers: config.headers,
-  })
-  .catch(err => {
-    console.log(err);
   })
 }
 
@@ -93,18 +69,16 @@ const likeCardFetch = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: 'PUT',
     headers: config.headers,
-  }).catch(err => {
-    console.log(err);
   })
+  .then(res => getResponseData(res))
 }
 
 const unlikeCardFetch = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: 'DELETE',
     headers: config.headers,
-  }).catch(err => {
-    console.log(err);
   })
+  .then(res => getResponseData(res))
 }
 
 const checkIsImage = (url) => {
@@ -122,16 +96,14 @@ const checkIsImage = (url) => {
 }
 
 const patchProfileImage = (avatar) => {
-  return checkIsImage(avatar).then(() => {
+  return checkIsImage(avatar)
+  .then(() => {
     return fetch(`${config.baseUrl}/users/me/avatar`, {
       method: 'PATCH',
       headers: config.headers,
       body: JSON.stringify({avatar})
     })
-    .catch(err => {
-      console.log(`Change profile Image error: ${err}`)
-    })
   })
 }
 
-module.exports = { getProfile, getInitialCards, patchProfile, postCard, deleteCardFetch, likeCardFetch, unlikeCardFetch, patchProfileImage}
+module.exports = { getProfile, getInitialCards, patchProfile, postCard, deleteCardFetch, likeCardFetch, unlikeCardFetch, patchProfileImage, errorHandler}
