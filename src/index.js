@@ -3,6 +3,7 @@ import { createCard, deleteCard, likeCard } from './components/card';
 import { openModal, closeModal, closeModalOnOverlay} from './components/modal';
 import {enableValidation, clearValidation} from './validation';
 import { getProfile, getInitialCards, patchProfile, postCard, deleteCardFetch, likeCardFetch, unlikeCardFetch, patchProfileImage, errorHandler } from './api';
+import { data } from 'autoprefixer';
 
 const openImageModal = (cardName, cardImageLink) => {
   popupCaption.textContent = cardName;
@@ -123,14 +124,9 @@ const formElementNewCard = document.querySelector('.popup_type_new-card .popup__
 const formElementEditImage = document.querySelector('.popup_type_edit-image .popup__form');
 
 const cardList = document.querySelector('.places__list');
-let myId = null;
 const profile = getProfile();
+let myId;
 const initialCards = getInitialCards();
-
-profile.then(data => {
-  myId = data['_id'];
-})
-.catch(err => errorHandler(err))
 
 const cardNameInput = document.querySelector('.popup__input_type_card-name'); 
 const cardImageInput = document.querySelector('.popup__input_type_url');
@@ -152,6 +148,7 @@ Promise.all([profile, initialCards])
     profileName.textContent = userData.name;
     profileDescription.textContent = userData.about;
     profileImage.style['background-image'] = `url(${userData.avatar})`;
+    myId = userData['_id'];
 
   cards.forEach(item => {
     const name = item.name;
